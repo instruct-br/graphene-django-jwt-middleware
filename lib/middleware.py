@@ -1,3 +1,7 @@
+import jwt
+from django.conf import settings
+
+
 class JWTAuthorizationMiddleware(object):
     def resolve(self, next, root, info, **args):
         request = info.context
