@@ -1,6 +1,6 @@
 import jwt
 import json
-import exceptions
+from . import exceptions
 from django.conf import settings
 
 
