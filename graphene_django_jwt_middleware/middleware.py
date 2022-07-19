@@ -1,5 +1,6 @@
 import jwt
 import json
+import exceptions
 from django.conf import settings
 
 
@@ -17,10 +18,10 @@ class JWTAuthorizationMiddleware(object):
             self.decode_jwt(token)
             return next(root, info, **args)
 
-        raise Exception("You do not have permission to perform this action")
+        raise exceptions.PermissionDenied()
 
     def is_introspect(self, request):
-        body = request._body.decode('utf-8')
+        body = request._body.decode("utf-8")
 
         if not body:
             return None
@@ -38,8 +39,8 @@ class JWTAuthorizationMiddleware(object):
                 algorithms=["HS256"],
             )
         except jwt.ExpiredSignatureError:
-            raise Exception("Signature has expired")
+            raise exceptions.ExpiredSignatureError()
         except jwt.DecodeError:
-            raise Exception("Error decoding token")
+            raise exceptions.DecodeError()
         except jwt.InvalidTokenError:
-            raise Exception("Invalid token")
+            raise exceptions.InvalidTokenError()
