@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "graphene-django-jwt-middleware"
-version = "0.0.4"
+version = "0.0.5"
 description = "Middleware to check JWT validation in GraphQL schemas"
 authors = ["Instruct Developers <oss@instruct.com.br>"]
 license = "MIT"
