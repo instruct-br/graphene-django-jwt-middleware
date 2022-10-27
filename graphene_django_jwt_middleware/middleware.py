@@ -1,9 +1,11 @@
 import jwt
 from . import exceptions
 from django.conf import settings
-
+import logging
 
 class JWTAuthorizationMiddleware(object):
+    no_repeat = True
+
     def resolve(self, next, root, info, **args):
         request = info.context
 
@@ -14,7 +16,7 @@ class JWTAuthorizationMiddleware(object):
             self.decode_jwt(token)
             return next(root, info, **args)
 
-        raise exceptions.PermissionDenied()
+        logging.warning(exceptions.PermissionDenied())
 
     def decode_jwt(self, token):
         try:
@@ -24,8 +26,14 @@ class JWTAuthorizationMiddleware(object):
                 algorithms=["HS256"],
             )
         except jwt.ExpiredSignatureError:
-            raise exceptions.ExpiredSignatureError()
+            if self.no_repeat:
+                logging.warning(exceptions.ExpiredSignatureError())
+                self.no_repeat = False
         except jwt.DecodeError:
-            raise exceptions.DecodeError()
+            if self.no_repeat:
+                logging.warning(exceptions.DecodeError())     
+                self.no_repeat = False
         except jwt.InvalidTokenError:
-            raise exceptions.InvalidTokenError()
+            if self.no_repeat:
+                logging.warning(exceptions.InvalidTokenError())
+                self.no_repeat = False
