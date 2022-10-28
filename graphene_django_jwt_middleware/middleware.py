@@ -1,11 +1,13 @@
+import logging
 import jwt
 from . import exceptions
+from graphql import GraphQLError
 from django.conf import settings
-import logging
+
+LOGGER = logging.getLogger('graphene-django-jwt-middleware')
+
 
 class JWTAuthorizationMiddleware(object):
-    no_repeat = True
-
     def resolve(self, next, root, info, **args):
         request = info.context
 
@@ -13,10 +15,15 @@ class JWTAuthorizationMiddleware(object):
         token = auth_header.replace("Bearer ", "")
 
         if token:
-            self.decode_jwt(token)
-            return next(root, info, **args)
+            valid_token = self.decode_jwt(token)
 
-        logging.warning(exceptions.PermissionDenied())
+            if not isinstance(valid_token, GraphQLError):
+                return next(root, info, **args)
+
+            return valid_token
+
+        LOGGER.warning(f'JWT Error: {exceptions.PermissionDenied()}')
+        return GraphQLError(exceptions.PermissionDenied())
 
     def decode_jwt(self, token):
         try:
@@ -26,14 +33,11 @@ class JWTAuthorizationMiddleware(object):
                 algorithms=["HS256"],
             )
         except jwt.ExpiredSignatureError:
-            if self.no_repeat:
-                logging.warning(exceptions.ExpiredSignatureError())
-                self.no_repeat = False
+            LOGGER.warning(f'JWT Error: {exceptions.ExpiredSignatureError()}')
+            return GraphQLError(exceptions.ExpiredSignatureError())
         except jwt.DecodeError:
-            if self.no_repeat:
-                logging.warning(exceptions.DecodeError())     
-                self.no_repeat = False
+            LOGGER.warning(exceptions.DecodeError())
+            return GraphQLError(exceptions.DecodeError())
         except jwt.InvalidTokenError:
-            if self.no_repeat:
-                logging.warning(exceptions.InvalidTokenError())
-                self.no_repeat = False
+            LOGGER.warning(exceptions.InvalidTokenError())
+            return GraphQLError(exceptions.InvalidTokenError())
