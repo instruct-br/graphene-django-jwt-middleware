@@ -36,8 +36,8 @@ class JWTAuthorizationMiddleware(object):
             LOGGER.warning(f'JWT Error: {exceptions.ExpiredSignatureError()}')
             return GraphQLError(exceptions.ExpiredSignatureError())
         except jwt.DecodeError:
-            LOGGER.warning(exceptions.DecodeError())
+            LOGGER.warning(f'JWT Error: {exceptions.DecodeError()}')
             return GraphQLError(exceptions.DecodeError())
         except jwt.InvalidTokenError:
-            LOGGER.warning(exceptions.InvalidTokenError())
+            LOGGER.warning(f'JWT Error: {exceptions.InvalidTokenError()}')
             return GraphQLError(exceptions.InvalidTokenError())
