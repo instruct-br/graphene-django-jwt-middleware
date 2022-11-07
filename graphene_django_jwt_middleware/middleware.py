@@ -41,7 +41,7 @@ class JWTAuthorizationMiddleware(object):
             jwt.decode(
                 token,
                 settings.SECRET_KEY,
-                algorithms=["HS256"],
+                algorithms=settings.JWT_ALGORITHMS,
             )
         except jwt.ExpiredSignatureError:
             LOGGER.warning(f'JWT Error: {exceptions.ExpiredSignatureError()}')
