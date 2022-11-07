@@ -1,10 +1,13 @@
-import logging
 import jwt
+import json
+import logging
 from . import exceptions
 from graphql import GraphQLError
 from django.conf import settings
 
 LOGGER = logging.getLogger('graphene-django-jwt-middleware')
+
+HEALTHCHECK_QUERY = "query __ApolloServiceHealthCheck__ { __typename }"
 
 
 class JWTAuthorizationMiddleware(object):
@@ -13,6 +16,9 @@ class JWTAuthorizationMiddleware(object):
 
         auth_header = request.META.get("HTTP_AUTHORIZATION", "")
         token = auth_header.replace("Bearer ", "")
+
+        if self.is_healthcheck_query(request._body.decode("utf-8")):
+            return next(root, info, **args)
 
         if token:
             valid_token = self.decode_jwt(token)
@@ -24,6 +30,11 @@ class JWTAuthorizationMiddleware(object):
 
         LOGGER.warning(f'JWT Error: {exceptions.PermissionDenied()}')
         return GraphQLError(exceptions.PermissionDenied())
+
+    def is_healthcheck_query(self, body):
+        body = json.loads(body)
+        query = body.get("query", "")
+        return query == HEALTHCHECK_QUERY
 
     def decode_jwt(self, token):
         try:
